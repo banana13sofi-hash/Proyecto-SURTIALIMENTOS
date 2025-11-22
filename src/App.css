@@ -1,0 +1,12 @@
+.app-container {
+    font-family: Arial, sans-serif;
+    background-color: white;
+    min-height: 100vh;
+}
+
+.main-content {
+    display: flex;
+    justify-content: space-around;
+    align-items: flex-start;
+    padding: 20px;
+}

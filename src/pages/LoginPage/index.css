@@ -1,0 +1,126 @@
+.login-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+    background-color: #f5f5f5;
+}
+
+.login-card {
+    width: 100%;
+    max-width: 480px;
+    margin: 1rem;
+}
+
+.login-header {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    margin-bottom: 1rem;
+    text-align: left;
+}
+
+.login-logo {
+    width: 64px;
+    height: 64px;
+    object-fit: contain;
+}
+
+.title-wrap {
+    display: flex;
+    flex-direction: column;
+}
+
+.app-title {
+    font-size: 1.2rem;
+    color: #ffffff !important; /* Force white color */
+    margin: 0;
+    letter-spacing: 1px;
+    display: inline-block;
+    background-color: #ff8a00; /* orange rectangle behind the text */
+    padding: 0.2rem 0.5rem;
+    border-radius: 4px;
+    font-weight: 700;
+    font-family: Cambria, serif;
+    text-shadow: 0 1px 2px rgba(0,0,0,0.1); /* Optional: adds slight shadow for better readability */
+}
+
+.slogan {
+    font-size: 0.75rem;
+    color: #000;
+    margin: 0;
+    letter-spacing: 1px;
+    display: inline-block;
+    background-color: #FFD5CD; /* orange rectangle behind the text */
+    padding: 0.2rem 0.5rem;
+    border-radius: 4px;
+    font-weight: 700;
+}
+.login-form {
+    background: white;
+    padding: 2rem;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    width: 100%;
+    max-width: 400px;
+}
+
+.form-title {
+    text-align: center;
+    color: #000;
+    margin-bottom: 1.25rem;
+    font-size: 1.4rem;
+    font-family: Cambria, serif;
+}
+
+.form-group {
+    margin-bottom: 1.5rem;
+}
+
+.form-group label {
+    display: block;
+    margin-bottom: 0.5rem;
+    color: #000;
+    font-weight: 500;
+}
+
+.form-group input {
+    width: 100%;
+    padding: 0.75rem;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    font-size: 1rem;
+    transition: border-color 0.2s;
+}
+
+.form-group input:focus {
+    outline: none;
+    border-color: #F28F3D;
+}
+
+.error-message {
+    color: #000;
+    text-align: center;
+    margin: 1rem 0;
+    font-size: 0.9rem;
+}
+
+button {
+    width: 100%;
+    padding: 0.75rem;
+    background-color: #F28F3B;
+    color: #000;
+    border: none;
+    border-radius: 4px;
+    font-size: 1rem;
+    cursor: pointer;
+    transition: background-color 0.2s;
+}
+
+button:hover {
+    background-color: #C8553D;
+}
+
+button:active {
+    transform: translateY(1px);
+}
