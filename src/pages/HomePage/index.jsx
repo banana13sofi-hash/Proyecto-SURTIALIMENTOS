@@ -1,6 +1,7 @@
 import React, { useState, useMemo, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import "./estilos.css";
+import categoriesData from "../../data/categories";
 
 function HomePage() {
   const navigate = useNavigate();
@@ -8,6 +9,7 @@ function HomePage() {
   const [term, setTerm] = useState("");
   const [expanded, setExpanded] = useState(null);
   const [visible, setVisible] = useState(false);
+  const [products, setProducts] = useState([]);
   const [categories, setCategories] = useState({});
   const [loading, setLoading] = useState(true);
 
@@ -17,12 +19,13 @@ function HomePage() {
         const response = await fetch("http://localhost:3001/api/products");
         if (response.ok) {
           const products = await response.json();
+          setProducts(products);
           // Group products by categoria
           const grouped = {};
           products.forEach(product => {
             const cat = product.categoria || "Sin Categoría";
             if (!grouped[cat]) grouped[cat] = [];
-            grouped[cat].push(product.nombre);
+            grouped[cat].push(product);
           });
           setCategories(grouped);
         } else {
@@ -40,15 +43,50 @@ function HomePage() {
   const filtered = useMemo(() => {
     const t = term.trim().toLowerCase();
     const res = {};
+
+    // Filtrar productos de la base de datos
     Object.keys(categories).forEach((cat) => {
       if (!t) {
         res[cat] = categories[cat];
       } else {
-        res[cat] = categories[cat].filter((it) =>
-          it.toLowerCase().includes(t)
+        res[cat] = categories[cat].filter((product) =>
+          product.nombre.toLowerCase().includes(t) ||
+          (product.descripcion || "").toLowerCase().includes(t)
         );
       }
     });
+
+    // Agregar categorías y subcategorías del archivo de datos
+    Object.keys(categoriesData).forEach((catName) => {
+      const subcategories = categoriesData[catName];
+
+      // Filtrar subcategorías que coincidan con la búsqueda
+      const filteredSubcats = subcategories.filter((subcat) =>
+        subcat.nombre.toLowerCase().includes(t) ||
+        catName.toLowerCase().includes(t)
+      );
+
+      if (filteredSubcats.length > 0 || !t) {
+        if (!res[catName]) {
+          res[catName] = [];
+        }
+
+        const subCatsToAdd = !t ? subcategories : filteredSubcats;
+
+        subCatsToAdd.forEach((subcat) => {
+          if (!res[catName].find((item) =>
+            item.nombre === subcat.nombre
+          )) {
+            res[catName].push({
+              ...subcat,
+              id: `subcat-${catName}-${subcat.nombre}`,
+              isSubcategory: true,
+            });
+          }
+        });
+      }
+    });
+
     return res;
   }, [term, categories]);
 
@@ -58,6 +96,14 @@ function HomePage() {
 
   function toggleCategory(cat) {
     setExpanded((prev) => (prev === cat ? null : cat));
+  }
+
+  if (loading) {
+    return (
+      <div className="loading-screen">
+        <p>Cargando productos...</p>
+      </div>
+    );
   }
 
   return (
@@ -131,13 +177,40 @@ function HomePage() {
                   {(expanded === cat || term) && (
                     <div className="sub-list">
                       {items.length ? (
-                        items.map((it) => (
+                        items.map((product) => (
                           <div
-                            key={it}
-                            className="sub-item"
-                            onClick={() => onSelectItem(it)}
+                            key={product.id}
+                            className="sub-item-card"
+                            onClick={() => onSelectItem(product.nombre)}
                           >
-                            {it}
+                            <div className="product-card-container">
+                              {product.imagen && (
+                                <img
+                                  src={product.imagen}
+                                  alt={product.nombre}
+                                  className="product-card-image"
+                                  onError={(e) => {
+                                    e.target.src = "https://via.placeholder.com/80?text=Producto";
+                                  }}
+                                />
+                              )}
+                              <div className="product-card-info">
+                                <div className="product-card-name">{product.nombre}</div>
+                                <div className="product-card-meta">
+                                  <span className="product-card-price">${product.precio ? product.precio.toFixed(2) : '0.00'}</span>
+                                  <span className="product-card-qty">Stock: {product.cantidad}</span>
+                                </div>
+                                {product.barcode && (
+                                  <div className="product-card-barcode">
+                                    <img
+                                      src={`https://barcode.tec-it.com/barcode.ashx?data=${product.barcode}&code=Code128&dpi=96&height=30&showtext=0`}
+                                      alt="Barcode"
+                                      style={{ maxWidth: '100%', height: 'auto' }}
+                                    />
+                                  </div>
+                                )}
+                              </div>
+                            </div>
                           </div>
                         ))
                       ) : (

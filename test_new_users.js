@@ -1,25 +1,38 @@
-import pool from './backend/bd.js';
+// SCRIPT DE PRUEBA - NO USAR EN PRODUCCIÓN
+// Para registrar nuevos usuarios, usa curl o Postman contra http://localhost:3001/api/register
+// Ejemplo:
+// curl -X POST http://localhost:3001/api/register \
+//   -H "Content-Type: application/json" \
+//   -d '{"usuario":"newuser","password":"securepass","email":"user@example.com"}'
 
-async function testNewUsers() {
-    const users = [
-        { usuario: 'JuanBarbosa', password: '123456' },
-        { usuario: 'ZoeTrent', password: 'Superstar' },
-        { usuario: 'Admin', password: 'Bananita' }
-    ];
+// Variables de entorno requeridas:
+// USUARIO=nombre_usuario (nuevo usuario a registrar)
+// PASSWORD=password (contraseña del nuevo usuario)
+// EMAIL=email@example.com (email del nuevo usuario)
 
-    for (const user of users) {
-        try {
-            const result = await pool.query('SELECT * FROM usuarios WHERE usuario = $1 AND "password" = $2', [user.usuario, user.password]);
-            console.log(`Login test for ${user.usuario}:`, result.rows.length > 0 ? 'SUCCESS' : 'FAILED');
-            if (result.rows.length > 0) {
-                console.log('User data:', result.rows[0]);
-            }
-        } catch (err) {
-            console.error(`Error for ${user.usuario}:`, err);
-        }
-    }
+const usuario = process.env.USUARIO;
+const password = process.env.PASSWORD;
+const email = process.env.EMAIL;
 
-    pool.end();
+if (!usuario || !password || !email) {
+    console.error('ERROR: Debes proporcionar USUARIO, PASSWORD y EMAIL como variables de entorno');
+    console.error('Uso: USUARIO=user PASSWORD=pass EMAIL=user@example.com node test_new_users.js');
+    process.exit(1);
 }
 
-testNewUsers();
+async function testRegister() {
+    try {
+        const response = await fetch('http://localhost:3001/api/register', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ usuario, password, email })
+        });
+        const result = await response.json();
+        console.log(`Register test for ${usuario}:`, result.success ? 'SUCCESS' : 'FAILED');
+        console.log('Response:', result);
+    } catch (err) {
+        console.error(`Error for ${usuario}:`, err.message);
+    }
+}
+
+testRegister();

@@ -55,13 +55,13 @@ const createTables = async () => {
         `);
 
         // Insert sample users for login
-        await pool.query(`
-            INSERT INTO usuarios (usuario, password) VALUES
-            ('juan', 'clave123'),
-            ('maria', 'superpass'),
-            ('admin', 'admin123')
-            ON CONFLICT DO NOTHING;
-        `);
+        // ADVERTENCIA: Las contraseñas DEBEN ser hasheadas en producción.
+        // Para desarrollo, usa el script backend/bd.js que hashea contraseñas con bcrypt.
+        // NUNCA insertes contraseñas en texto claro en una base de datos real.
+        console.log('⚠️  NOTA DE SEGURIDAD:')
+        console.log('    - Las contraseñas NO deben almacenarse en texto claro');
+        console.log('    - El backend (backend/bd.js) usa bcrypt para hashear contraseñas');
+        console.log('    - Este script es solo para desarrollo/testing');
 
         console.log('Tables created and sample data inserted successfully');
     } catch (err) {

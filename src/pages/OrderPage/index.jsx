@@ -1,13 +1,17 @@
 import React, { useEffect, useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
+import "./OrderPage.css";
+
+const API_URL = process.env.REACT_APP_API_URL || "http://localhost:3001/api";
 
 // Function to send order to API
-const sendOrderToAPI = async (orderData) => {
+const sendOrderToAPI = async (orderData, token) => {
   try {
-    const response = await fetch('http://localhost:3001/api/orders', {
+    const response = await fetch(`${API_URL}/orders`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
+        Authorization: `Bearer ${token}`,
       },
       body: JSON.stringify(orderData),
     });
@@ -23,9 +27,13 @@ const sendOrderToAPI = async (orderData) => {
 };
 
 // Function to fetch orders from API
-const fetchOrdersFromAPI = async (userId) => {
+const fetchOrdersFromAPI = async (token) => {
   try {
-    const response = await fetch(`http://localhost:3001/api/orders?usuario_id=${userId}`);
+    const response = await fetch(`${API_URL}/orders`, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
     if (response.ok) {
       return await response.json();
     } else {
@@ -42,27 +50,41 @@ function OrderPage() {
   const [cart, setCart] = useState([]);
   const [orders, setOrders] = useState([]);
   const [wasEmptied, setWasEmptied] = useState(false);
-  const [userId, setUserId] = useState(1); // Assuming user ID from auth context
+  const [userId, setUserId] = useState(null);
+  const [token, setToken] = useState(null);
 
   useEffect(() => {
     try {
-      const raw = localStorage.getItem("cart") || "[]";
+      const raw = localStorage.getItem('cart') || '[]';
       setCart(JSON.parse(raw));
     } catch (err) {
       console.error(err);
       setCart([]);
     }
-    // Fetch existing orders
+
+    const storedUser = localStorage.getItem('authUser');
+    const storedToken = localStorage.getItem('authToken');
+    if (storedUser) {
+      const parsedUser = JSON.parse(storedUser);
+      setUserId(parsedUser.id);
+    }
+    if (storedToken) {
+      setToken(storedToken);
+    }
+
     const loadOrders = async () => {
-      const fetchedOrders = await fetchOrdersFromAPI(userId);
+      if (!storedToken) {
+        return;
+      }
+      const fetchedOrders = await fetchOrdersFromAPI(storedToken);
       setOrders(fetchedOrders);
     };
     loadOrders();
-  }, [userId]);
+  }, []);
 
   function saveCart(newCart) {
     setCart(newCart);
-    localStorage.setItem("cart", JSON.stringify(newCart));
+    localStorage.setItem('cart', JSON.stringify(newCart));
   }
 
   function updateQty(index, delta) {
@@ -86,12 +108,23 @@ function OrderPage() {
 
   async function sendOrder() {
     try {
+      if (!token) {
+        alert('Debe iniciar sesión para enviar una orden');
+        navigate('/');
+        return;
+      }
+
+      const items = cart.map(item => ({
+        producto_id: item.id,
+        cantidad: item.qty,
+        precio: item.precio
+      }));
+
       const orderData = {
-        usuario_id: 1, // Assuming user ID 1 for now, you can get from auth context
-        total: cart.reduce((sum, item) => sum + (item.qty * 10), 0), // Calculate total, assuming price 10 for simplicity
-        estado: 'pendiente'
+        items,
+        estado: 'pendiente',
       };
-      await sendOrderToAPI(orderData);
+      await sendOrderToAPI(orderData, token);
       alert("Su orden ha sido enviada satisfactoriamente");
       clearCart();
       navigate("/home");
@@ -101,78 +134,74 @@ function OrderPage() {
   }
 
   const totalItems = cart.reduce((s, it) => s + (it.qty || 0), 0);
+  const totalPrice = cart.reduce((s, it) => s + (it.qty * it.precio), 0);
 
   return (
-    <div style={{ padding: 16 }}>
+    <div className="order-page">
+      <div className="order-header">
+        <h3>ORDEN</h3>
+      </div>
 
-      <table width="100%">
-        <tbody>
-          <tr>
-            <td colSpan={1} style={{ backgroundColor: '#c8553d', textAlign: 'center' }}>
-              <h3 style={{ margin: 8, color: '#fff' }}>ORDEN</h3>
-            </td>
-          </tr>
-        </tbody>
-      </table>
+      <div className="order-info-section">
+        <h3>INFORMACIÓN DE LA ORDEN</h3>
 
-      <h3 style={{ textAlign: 'center', marginTop: 20 }}>INFORMACIÓN DE LA ORDEN</h3>
+        {cart.length > 0 ? (
+          (() => {
+            const dates = cart.map((c) => c.addedAt).filter(Boolean).map((d) => new Date(d));
+            const earliest = dates.length ? new Date(Math.min(...dates.map((d) => d.getTime()))) : new Date();
+            return <p><strong>Fecha de generación:</strong> {earliest.toLocaleString('es-CO')}</p>;
+          })()
+        ) : (
+          <p><strong>Fecha de generación:</strong> {new Date().toLocaleString('es-CO')}</p>
+        )}
+        <p><strong>Lugar de entrega:</strong> Supermercados Jimmy</p>
+      </div>
 
-      {cart.length > 0 ? (
-        (() => {
-          const dates = cart.map((c) => c.addedAt).filter(Boolean).map((d) => new Date(d));
-          const earliest = dates.length ? new Date(Math.min(...dates.map((d) => d.getTime()))) : new Date();
-          return <p><strong>Fecha de generación:</strong> {earliest.toLocaleString('es-CO')}</p>;
-        })()
-      ) : (
-        <p><strong>Fecha de generación:</strong> {new Date().toLocaleString('es-CO')}</p>
-      )}
-      <p><strong>Lugar de entrega:</strong> Supermercados Jimmy</p>
+      <div className="order-products-section">
+        <h3>PRODUCTOS SELECCIONADOS</h3>
 
-      <h3 style={{ textAlign: 'center', marginTop: 20 }}>PRODUCTOS SELECCIONADOS</h3>
-
-      {cart.length === 0 ? (
-        <div>
-          <p style={{ textAlign: 'center' }}>No hay productos en la orden.</p>
-          <div style={{ textAlign: 'center' }}>
-            <Link to="/home" style={{ color: '#f28f3b', fontWeight: 600 }}>Volver al inicio</Link>
+        {cart.length === 0 ? (
+          <div className="empty-order">
+            <p>No hay productos en la orden.</p>
+            <button
+              className="btn btn-back-home"
+              onClick={() => navigate("/home")}
+            >
+              Volver al inicio
+            </button>
           </div>
-        </div>
-      ) : (
-        <div>
-          <ul>
-            {cart.map((it, idx) => (
-              <li key={`${it.name}-${idx}`}>{it.name} x {it.qty}</li>
-            ))}
-          </ul>
+        ) : (
+          <div>
+            <div className="order-list">
+              {cart.map((item, idx) => (
+                <div className="order-item" key={`${item.name}-${idx}`}>
+                  <div className="order-item-info">
+                    <div className="order-item-name">{item.name}</div>
+                    <div className="order-item-category">{item.category}</div>
+                  </div>
 
-          <div style={{ marginTop: 12 }}>
-            <button onClick={clearCart} style={{ marginRight: 8, padding: '8px 10px' }}>Vaciar orden</button>
-          </div>
-
-          <div className="order-list" style={{ marginTop: 12 }}>
-            {cart.map((item, idx) => (
-              <div className="order-item" key={`${item.name}-${idx}`} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: 8, borderBottom: '1px solid rgba(0,0,0,0.06)' }}>
-                <div>
-                  <div style={{ fontWeight: 700 }}>{item.name}</div>
-                  <div style={{ fontSize: 12, color: '#666' }}>{item.category}</div>
+                  <div className="order-item-controls">
+                    <button className="qty-button" onClick={() => updateQty(idx, -1)}>−</button>
+                    <div className="qty-display">{item.qty}</div>
+                    <button className="qty-button" onClick={() => updateQty(idx, 1)}>+</button>
+                    <button className="remove-btn" onClick={() => removeItem(idx)}>Eliminar</button>
+                  </div>
                 </div>
+              ))}
+            </div>
 
-                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                  <button onClick={() => updateQty(idx, -1)}>-</button>
-                  <div style={{ minWidth: 32, textAlign: 'center' }}>{item.qty}</div>
-                  <button onClick={() => updateQty(idx, 1)}>+</button>
-                  <button onClick={() => removeItem(idx)} style={{ marginLeft: 8 }}>Eliminar</button>
-                </div>
-              </div>
-            ))}
-          </div>
+            <div className="order-summary">
+              <button className="clear-cart-btn" onClick={clearCart}>Vaciar orden</button>
+              <div className="total-price">Total: ${totalPrice.toFixed(2)}</div>
+            </div>
 
-          <div className="bottom-buttons" style={{ textAlign: 'center', marginTop: 20 }}>
-            <button className="btn btn-logout" onClick={() => navigate('/home')} style={{ marginRight: 8 }}>Seguir comprando</button>
-            <button className="btn btn-primary" id="sendOrderBtn" onClick={sendOrder}>Enviar orden</button>
+            <div className="bottom-buttons">
+              <button className="btn btn-logout" onClick={() => navigate('/home')}>Seguir comprando</button>
+              <button className="btn btn-primary" id="sendOrderBtn" onClick={sendOrder}>Enviar orden</button>
+            </div>
           </div>
-        </div>
-      )}
+        )}
+      </div>
     </div>
   );
 }

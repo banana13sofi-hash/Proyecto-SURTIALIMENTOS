@@ -1,7 +1,7 @@
 import React, { useMemo, useState, useEffect } from "react";
-import { useLocation, Link, useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import categories from "../../data/categories";
-import "../HomePage/estilos.css";
+import "./ResultsPage.css";
 
 // Function to fetch product details from API
 const fetchProductDetails = async (productName) => {
@@ -53,6 +53,7 @@ function ResultsPage() {
       const productDetails = await fetchProductDetails(term);
       if (productDetails) {
         setSelected({
+          id: productDetails.id,
           name: productDetails.nombre,
           category: productDetails.categoria,
           image: "https://media.giphy.com/media/v1.Y2lkPTc5MGI3NjExcDg2emltcXc0OGk3MnoyN2FveWhzZmR1YnBkeXR5OGZ3eTl6eTludSZlcD12MV9naWZzX3NlYXJjaCZjdD1n/lX3GTgWi2W2GY/giphy.gif",
@@ -79,78 +80,105 @@ function ResultsPage() {
   }, [term, filtered]);
 
   return (
-    <div style={{ padding: "1rem" }}>
-      <div style={{ marginBottom: "1rem", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+    <div className="results-page">
+      <div className="results-header">
         <h2>Resultados para "{term}"</h2>
-        <Link to="/home" style={{ textDecoration: "none", color: "#f28f3b", fontWeight: 600 }}>Volver</Link>
+        <button className="btn-back" onClick={() => navigate("/home")}>
+          Volver
+        </button>
       </div>
 
       <div className="results-panel">
-        <div style={{ padding: "0.5rem 0.75rem" }}>
+        <div className="results-header-info">
           <strong>{total}</strong> resultado(s) encontrados
         </div>
 
         {selected ? (
-          <div className="product-detail" style={{ padding: 12 }}>
-            <table width="100%">
-              <tbody>
-                <tr>
-                  <td colSpan={1} style={{ backgroundColor: "#c8553d", textAlign: "center" }}>
-                    <h3 style={{ margin: 8 }}>{selected.category.toUpperCase()}</h3>
-                  </td>
-                </tr>
-              </tbody>
-            </table>
+          <div className="product-detail">
+            <div className="product-category-header">
+              {selected.category.toUpperCase()}
+            </div>
 
-            <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-start", marginTop: 20 }}>
-              <table width="80%" style={{ marginBottom: 20, alignSelf: 'center' }}>
-                <tbody>
-                  <tr>
-                    <td style={{ backgroundColor: "#f28f3b", textAlign: "center", padding: 12 }}>
-                      {selected.name}
-                    </td>
-                  </tr>
-                </tbody>
-              </table>
-
-              <img src={selected.image} alt={selected.name} style={{ maxWidth: 300, width: "100%", height: "auto", marginBottom: 20, alignSelf: 'center' }} />
-
-              <h3 style={{ marginTop: 20 }}>GENERALIDADES</h3>
-              <p><strong>Cantidad:</strong> {selected.quantity ?? 0}</p>
-
-              <div style={{ alignSelf: "flex-start", textAlign: "left", width: "100%", maxWidth: 400 }}>
-                <p><strong>Fecha de vencimiento más cercana:</strong> {selected.expiry || "N/A"}</p>
-                <p><strong>Código de barras</strong></p>
-                <div className="barcode-image" style={{ marginBottom: 20, display: "flex", justifyContent: "center" }}>
-                  <img src={selected.barcode || "https://via.placeholder.com/100x40?text=Barcode"} alt="Código de barras" style={{ maxWidth: 100, width: "100%", height: "auto", display: "block" }} />
-                </div>
+            <div className="product-detail-layout">
+              <div className="product-name-box">
+                {selected.name}
               </div>
 
-              <div className="bottom-buttons" style={{ marginBottom: 20, display: 'flex', flexDirection: 'column', justifyContent: 'flex-start', alignItems: 'center', gap: 8, width: '100%' }}>
-                <div className="counter" style={{ alignSelf: 'center', marginTop: 8 }}>
-                  <button type="button" className="counter-btn" onClick={() => setQty((q) => Math.max(1, q - 1))}>-</button>
-                  <input className="counter-input" type="number" min={1} value={qty} onChange={(e) => setQty(Math.max(1, Number(e.target.value || 1)))} />
-                  <button type="button" className="counter-btn" onClick={() => setQty((q) => q + 1)}>+</button>
+              <img
+                src={selected.image}
+                alt={selected.name}
+                className="product-image"
+              />
+
+              <div style={{ width: "100%", maxWidth: "500px" }}>
+                <h3 className="product-section-title">GENERALIDADES</h3>
+                <p className="product-info"><strong>Cantidad:</strong> {selected.quantity ?? 0}</p>
+
+                <p className="product-info"><strong>Fecha de vencimiento más cercana:</strong> {selected.expiry || "N/A"}</p>
+
+                <p className="product-info"><strong>Código de barras</strong></p>
+                <div className="barcode-image">
+                  <img
+                    src={selected.barcode || "https://via.placeholder.com/100x40?text=Barcode"}
+                    alt="Código de barras"
+                  />
                 </div>
 
-                <button className="btn btn-primary" style={{ backgroundColor: '#FFD5CD', color: '#000', border: '1px solid rgba(0,0,0,0.06)', marginTop: 6 }} onClick={() => {
+                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', width: '100%' }}>
+                  <div className="counter">
+                    <button
+                      type="button"
+                      className="counter-btn"
+                      onClick={() => setQty((q) => Math.max(1, q - 1))}
+                    >
+                      −
+                    </button>
+                    <input
+                      className="counter-input"
+                      type="number"
+                      min={1}
+                      value={qty}
+                      onChange={(e) => setQty(Math.max(1, Number(e.target.value || 1)))}
+                    />
+                    <button
+                      type="button"
+                      className="counter-btn"
+                      onClick={() => setQty((q) => q + 1)}
+                    >
+                      +
+                    </button>
+                  </div>
 
-                  try {
-                    const raw = localStorage.getItem("cart") || "[]";
-                    const cart = JSON.parse(raw);
-                    const existing = cart.find((c) => c.name === selected.name && c.category === selected.category);
-                    if (existing) {
-                      existing.qty = (existing.qty || 0) + qty;
-                    } else {
-                      cart.push({ name: selected.name, category: selected.category, qty, addedAt: new Date().toISOString() });
-                    }
-                    localStorage.setItem("cart", JSON.stringify(cart));
-                    navigate("/order");
-                  } catch (err) {
-                    console.error(err);
-                    alert("No se pudo agregar a la orden");
-                  }
-                }}>Agregar a la orden</button>
+                  <button
+                    className="btn btn-primary add-to-order-btn"
+                    onClick={() => {
+                      try {
+                        const raw = localStorage.getItem("cart") || "[]";
+                        const cart = JSON.parse(raw);
+                        const existing = cart.find((c) => c.id === selected.id);
+                        if (existing) {
+                          existing.qty = (existing.qty || 0) + qty;
+                        } else {
+                          cart.push({
+                            id: selected.id,
+                            name: selected.name,
+                            category: selected.category,
+                            qty,
+                            precio: selected.precio,
+                            addedAt: new Date().toISOString()
+                          });
+                        }
+                        localStorage.setItem("cart", JSON.stringify(cart));
+                        navigate("/order");
+                      } catch (err) {
+                        console.error(err);
+                        alert("No se pudo agregar a la orden");
+                      }
+                    }}
+                  >
+                    Agregar a la orden
+                  </button>
+                </div>
               </div>
             </div>
           </div>
@@ -161,16 +189,49 @@ function ResultsPage() {
                 <span className="cat-name">{cat}</span>
                 <span className="cat-count">{filtered[cat].length}</span>
               </div>
-              <div className="sub-list" style={{ paddingTop: 8 }}>
+              <div className="sub-list">
                 {filtered[cat].length ? (
                   filtered[cat].map((it) => (
                     <div
-                      className="sub-item"
-                      key={it}
-                      style={{ margin: "0.25rem" }}
-                      onClick={() => setSelected({ name: it, category: cat, image: "https://media.giphy.com/media/v1.Y2lkPTc5MGI3NjExcDg2emltcXc0OGk3MnoyN2FveWhzZmR1YnBkeXR5OGZ3eTl6eTludSZlcD12MV9naWZzX3NlYXJjaCZjdD1n/lX3GTgWi2W2GY/giphy.gif", quantity: 1000, expiry: "29 de septiembre de 2025", barcode: "https://via.placeholder.com/100x40?text=Barcode" })}
+                      className="sub-item-card"
+                      key={it.nombre}
+                      onClick={() => setSelected({
+                        id: it.id || `subcat-${cat}-${it.nombre}`,
+                        name: it.nombre,
+                        category: cat,
+                        image: it.imagen || "https://media.giphy.com/media/v1.Y2lkPTc5MGI3NjExcDg2emltcXc0OGk3MnoyN2FveWhzZmR1YnBkeXR5OGZ3eTl6eTludSZlcD12MV9naWZzX3NlYXJjaCZjdD1n/lX3GTgWi2W2GY/giphy.gif",
+                        quantity: it.cantidad || 1000,
+                        expiry: "29 de septiembre de 2025",
+                        barcode: it.barcode || "7501234567001",
+                        precio: it.precio || 0,
+                      })}
                     >
-                      {it}
+                      <div className="product-card-container">
+                        <img
+                          src={it.imagen || "https://via.placeholder.com/80?text=Producto"}
+                          alt={it.nombre}
+                          className="product-card-image"
+                          onError={(e) => {
+                            e.target.src = "https://via.placeholder.com/80?text=Producto";
+                          }}
+                        />
+                        <div className="product-card-info">
+                          <div className="product-card-name">{it.nombre}</div>
+                          <div className="product-card-meta">
+                            <span className="product-card-price">${it.precio ? it.precio.toFixed(2) : '0.00'}</span>
+                            <span className="product-card-qty">Stock: {it.cantidad}</span>
+                          </div>
+                          {it.barcode && (
+                            <div className="product-card-barcode">
+                              <img
+                                src={`https://barcode.tec-it.com/barcode.ashx?data=${it.barcode}&code=Code128&dpi=96&height=30&showtext=0`}
+                                alt="Barcode"
+                                style={{ maxWidth: '100%', height: 'auto' }}
+                              />
+                            </div>
+                          )}
+                        </div>
+                      </div>
                     </div>
                   ))
                 ) : (

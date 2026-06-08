@@ -5,6 +5,7 @@ import "../../index.css";
 import "../LoginPage/index.css";
 
 function LoginPage() {
+  const API_URL = process.env.REACT_APP_API_URL || "http://localhost:3001/api";
   const [user, setUser] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
@@ -15,7 +16,7 @@ function LoginPage() {
     setError("");
 
     try {
-      const response = await fetch("http://localhost:3001/api/login", {
+      const response = await fetch(`${API_URL}/login`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -29,6 +30,8 @@ function LoginPage() {
       const data = await response.json();
 
       if (data.success) {
+        localStorage.setItem('authToken', data.token);
+        localStorage.setItem('authUser', JSON.stringify(data.user));
         navigate("/loading");
       } else {
         setError(data.message || "Usuario o contraseña incorrectos");

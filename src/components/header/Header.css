@@ -1,12 +1,16 @@
 .header {
-    background-color: #f28f3b;
-    padding: 20px;
+    background: linear-gradient(135deg, #f28f3b 0%, #e67e2a 100%);
+    padding: 24px 20px;
     text-align: center;
+    box-shadow: 0 4px 12px rgba(242, 143, 59, 0.15);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
 }
 
 .header-title {
-    font-weight: bold;
-    font-size: 40px;
+    font-weight: 700;
+    font-size: 36px;
     color: white;
     margin: 0;
+    letter-spacing: -0.5px;
+    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }

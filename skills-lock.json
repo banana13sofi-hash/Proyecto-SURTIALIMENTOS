@@ -1,0 +1,15 @@
+{
+  "version": 1,
+  "skills": {
+    "instrument": {
+      "source": "comet-ml/opik-skills",
+      "sourceType": "github",
+      "computedHash": "009cd0995c303b4176697b3283288035b5daa7337c1e461f038a5382385ffae2"
+    },
+    "opik": {
+      "source": "comet-ml/opik-skills",
+      "sourceType": "github",
+      "computedHash": "415c2fc6d8029bc1406a63501859c1d9a3e550d932ff8de60e9d74f9a625e834"
+    }
+  }
+}

@@ -1,12 +1,15 @@
 .subheader {
-    background-color: #ffd5c2;
-    padding: 15px;
+    background: linear-gradient(135deg, #fff3e6 0%, #ffe6d5 100%);
+    padding: 16px;
     text-align: center;
+    border-bottom: 2px solid rgba(242, 143, 59, 0.1);
 }
 
 .subheader-text {
-    font-size: 20px;
-    font-weight: bold;
+    font-size: 18px;
+    font-weight: 600;
     margin: 0;
-    color: #333;
+    color: #2c3e50;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
+    letter-spacing: 0.5px;
 }
