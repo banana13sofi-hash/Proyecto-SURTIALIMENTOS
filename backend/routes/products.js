@@ -1,30 +1,29 @@
 import express from 'express';
 const router = express.Router();
-import dbPromise from '../bd.js';
+import pool from '../bd.js';
 
 // GET /api/products - Fetch all products or search by name/category
 router.get('/', async (req, res) => {
     try {
-        const db = await dbPromise;
         const { name, categoria } = req.query;
-        let products;
+        let result;
 
         if (name) {
             const term = `%${name.trim().toLowerCase()}%`;
-            products = await db.all(
-                'SELECT * FROM productos WHERE LOWER(nombre) LIKE ? OR LOWER(descripcion) LIKE ? OR LOWER(categoria) LIKE ? ORDER BY id ASC',
+            result = await pool.query(
+                'SELECT * FROM productos WHERE LOWER(nombre) LIKE $1 OR LOWER(descripcion) LIKE $2 OR LOWER(categoria) LIKE $3 ORDER BY id ASC',
                 [term, term, term]
             );
         } else if (categoria) {
-            products = await db.all(
-                'SELECT * FROM productos WHERE LOWER(categoria) = ? ORDER BY id ASC',
+            result = await pool.query(
+                'SELECT * FROM productos WHERE LOWER(categoria) = $1 ORDER BY id ASC',
                 [categoria.trim().toLowerCase()]
             );
         } else {
-            products = await db.all('SELECT * FROM productos ORDER BY id ASC');
+            result = await pool.query('SELECT * FROM productos ORDER BY id ASC');
         }
 
-        res.json(products);
+        res.json(result.rows);
     } catch (err) {
         console.error('Error fetching products:', err);
         res.status(500).json({ error: 'Internal server error' });
@@ -34,12 +33,10 @@ router.get('/', async (req, res) => {
 // GET /api/products/:id - Fetch a single product by ID
 router.get('/:id', async (req, res) => {
     try {
-        const db = await dbPromise;
         const { id } = req.params;
-        const product = await db.get('SELECT * FROM productos WHERE id = ?', [id]);
-        if (!product) {
-            return res.status(404).json({ error: 'Product not found' });
-        }
+        const result = await pool.query('SELECT * FROM productos WHERE id = $1', [id]);
+        const product = result.rows[0];
+        if (!product) return res.status(404).json({ error: 'Product not found' });
         res.json(product);
     } catch (err) {
         console.error('Error fetching product:', err);
@@ -50,14 +47,12 @@ router.get('/:id', async (req, res) => {
 // POST /api/products - Create a new product
 router.post('/', async (req, res) => {
     try {
-        const db = await dbPromise;
         const { nombre, descripcion, precio, stock, categoria } = req.body;
-        const result = await db.run(
-            'INSERT INTO productos (nombre, descripcion, precio, stock, categoria) VALUES (?, ?, ?, ?, ?)',
+        const result = await pool.query(
+            'INSERT INTO productos (nombre, descripcion, precio, stock, categoria) VALUES ($1, $2, $3, $4, $5) RETURNING *',
             [nombre, descripcion, precio, stock, categoria]
         );
-        const newProduct = await db.get('SELECT * FROM productos WHERE id = ?', [result.lastID]);
-        res.status(201).json(newProduct);
+        res.status(201).json(result.rows[0]);
     } catch (err) {
         console.error('Error creating product:', err);
         res.status(500).json({ error: 'Internal server error' });
@@ -67,18 +62,14 @@ router.post('/', async (req, res) => {
 // PUT /api/products/:id - Update a product
 router.put('/:id', async (req, res) => {
     try {
-        const db = await dbPromise;
         const { id } = req.params;
         const { nombre, descripcion, precio, stock, categoria } = req.body;
-        const result = await db.run(
-            'UPDATE productos SET nombre = ?, descripcion = ?, precio = ?, stock = ?, categoria = ? WHERE id = ?',
+        const result = await pool.query(
+            'UPDATE productos SET nombre = $1, descripcion = $2, precio = $3, stock = $4, categoria = $5 WHERE id = $6 RETURNING *',
             [nombre, descripcion, precio, stock, categoria, id]
         );
-        if (result.changes === 0) {
-            return res.status(404).json({ error: 'Product not found' });
-        }
-        const updatedProduct = await db.get('SELECT * FROM productos WHERE id = ?', [id]);
-        res.json(updatedProduct);
+        if (result.rowCount === 0) return res.status(404).json({ error: 'Product not found' });
+        res.json(result.rows[0]);
     } catch (err) {
         console.error('Error updating product:', err);
         res.status(500).json({ error: 'Internal server error' });
@@ -88,12 +79,9 @@ router.put('/:id', async (req, res) => {
 // DELETE /api/products/:id - Delete a product
 router.delete('/:id', async (req, res) => {
     try {
-        const db = await dbPromise;
         const { id } = req.params;
-        const result = await db.run('DELETE FROM productos WHERE id = ?', [id]);
-        if (result.changes === 0) {
-            return res.status(404).json({ error: 'Product not found' });
-        }
+        const result = await pool.query('DELETE FROM productos WHERE id = $1', [id]);
+        if (result.rowCount === 0) return res.status(404).json({ error: 'Product not found' });
         res.json({ message: 'Product deleted successfully' });
     } catch (err) {
         console.error('Error deleting product:', err);

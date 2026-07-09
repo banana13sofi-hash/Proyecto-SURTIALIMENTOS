@@ -1,10 +1,77 @@
+.home-page-shell {
+    min-height: 100vh;
+    background: linear-gradient(135deg, #fffaf5 0%, #ffffff 100%);
+    padding: 24px 0 36px;
+}
+
+.home-hero {
+    width: min(92%, 860px);
+    margin: 0 auto 20px;
+    padding: 24px 28px;
+    border-radius: 24px;
+    background: linear-gradient(135deg, #c8553d 0%, #f28f3b 100%);
+    box-shadow: 0 16px 36px rgba(200, 85, 61, 0.2);
+    color: white;
+    position: relative;
+    overflow: hidden;
+}
+
+.home-hero::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(circle at top right, rgba(255, 255, 255, 0.24), transparent 38%);
+    pointer-events: none;
+    animation: pulseGlow 6s ease-in-out infinite alternate;
+}
+
+.home-hero-content {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.home-hero-badge {
+    display: inline-block;
+    width: fit-content;
+    padding: 6px 12px;
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.2);
+    font-size: 0.8rem;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+    margin: 0;
+}
+
+.home-hero h3 {
+    margin: 0;
+    font-size: 1.35rem;
+    color: white;
+}
+
+.home-hero p {
+    margin: 0;
+    font-size: 0.95rem;
+    line-height: 1.5;
+    color: rgba(255, 255, 255, 0.95);
+}
+
 .search-box {
-    width: 90%;
-    max-width: 800px;
+    width: min(92%, 820px);
     padding: 24px;
-    background-color: white;
-    border-radius: 16px;
-    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
+    background: rgba(255, 255, 255, 0.96);
+    border: 1px solid rgba(242, 143, 59, 0.15);
+    border-radius: 18px;
+    box-shadow: 0 12px 30px rgba(44, 62, 80, 0.08);
+    margin: 0 auto 16px;
+    transition: transform 0.25s ease, box-shadow 0.25s ease;
+    backdrop-filter: blur(10px);
+}
+
+.search-box:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 18px 36px rgba(44, 62, 80, 0.12);
 }
 
 .search-box fieldset {
@@ -14,15 +81,16 @@
     display: flex;
     gap: 12px;
     position: relative;
+    align-items: center;
 }
 
 #search-input {
     flex: 1;
     padding: 14px 16px;
     padding-left: 40px;
-    border: 2px solid #e0e0e0;
-    border-radius: 10px;
-    font-size: 1.05rem;
+    border: 1px solid #e6e6e6;
+    border-radius: 12px;
+    font-size: 1.02rem;
     font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
     transition: all 0.3s ease;
     color: #2c3e50;
@@ -30,6 +98,7 @@
     background-repeat: no-repeat;
     background-position: 12px center;
     background-size: 20px;
+    box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.03);
 }
 
 #search-input:focus {
@@ -45,18 +114,18 @@
 }
 
 .search-button {
-    padding: 14px 28px;
+    padding: 14px 24px;
     background: linear-gradient(135deg, #f28f3b 0%, #e67e2a 100%);
     color: white;
     border: none;
-    border-radius: 10px;
+    border-radius: 12px;
     cursor: pointer;
-    font-size: 1rem;
+    font-size: 0.98rem;
     font-weight: 600;
-    letter-spacing: 0.5px;
+    letter-spacing: 0.4px;
     transition: all 0.3s ease;
     white-space: nowrap;
-    box-shadow: 0 4px 12px rgba(242, 143, 59, 0.2);
+    box-shadow: 0 8px 16px rgba(242, 143, 59, 0.2);
     display: inline-flex;
     align-items: center;
     gap: 8px;
@@ -111,14 +180,16 @@ table h3 {
 
 .results-panel {
     margin-top: 12px;
-    background: #fff;
-    border: 1px solid #e8e8e8;
-    border-radius: 12px;
-    box-shadow: 0 8px 28px rgba(0, 0, 0, 0.08);
-    max-height: 400px;
-    overflow: auto;
+    background: rgba(255, 255, 255, 0.97);
+    border: 1px solid #f0e0d5;
+    border-radius: 16px;
+    box-shadow: 0 12px 28px rgba(44, 62, 80, 0.08);
+    max-height: min(30vh, 240px);
+    overflow-y: auto;
+    overflow-x: hidden;
     padding: 8px;
     animation: slideDown 0.3s ease;
+    backdrop-filter: blur(10px);
 }
 
 @keyframes slideDown {
@@ -133,9 +204,21 @@ table h3 {
     }
 }
 
+@keyframes pulseGlow {
+    from {
+        opacity: 0.35;
+        transform: scale(0.96);
+    }
+
+    to {
+        opacity: 0.7;
+        transform: scale(1.06);
+    }
+}
+
 .category {
     border-bottom: 1px solid #f0f0f0;
-    padding: 8px 12px;
+    padding: 6px 8px;
 }
 
 .category:last-child {
@@ -147,14 +230,14 @@ table h3 {
     justify-content: space-between;
     align-items: center;
     cursor: pointer;
-    padding: 8px 4px;
+    padding: 8px 8px;
     user-select: none;
     transition: background-color 0.2s ease;
-    border-radius: 6px;
+    border-radius: 10px;
 }
 
 .category-header:hover {
-    background: #f8f8f8;
+    background: #fff5eb;
 }
 
 .cat-name {
@@ -173,21 +256,33 @@ table h3 {
 }
 
 .sub-list {
-    margin-top: 8px;
+    margin-top: 6px;
     display: flex;
     flex-wrap: wrap;
-    gap: 8px;
-    padding: 4px 0;
+    gap: 6px;
+    padding: 2px 0;
+}
+
+.compact-list {
+    flex-direction: column;
+    align-items: stretch;
+}
+
+.compact-item {
+    width: 100%;
+    text-align: left;
+    padding: 8px 10px;
+    font-size: 0.9rem;
 }
 
 .sub-item {
-    background: #f8f9fa;
+    background: #fff;
     padding: 8px 12px;
-    border-radius: 8px;
+    border-radius: 10px;
     cursor: pointer;
     font-size: 0.95rem;
     transition: all 0.2s ease;
-    border: 1px solid #e0e0e0;
+    border: 1px solid #f1e2d5;
     color: #2c3e50;
     font-weight: 500;
 }
@@ -196,7 +291,7 @@ table h3 {
     background: #fff3e6;
     border-color: #f28f3b;
     transform: translateY(-1px);
-    box-shadow: 0 2px 8px rgba(242, 143, 59, 0.15);
+    box-shadow: 0 4px 10px rgba(242, 143, 59, 0.12);
 }
 
 .sub-item-card {
@@ -213,8 +308,8 @@ table h3 {
 
 .sub-item-card:hover {
     border-color: #f28f3b;
-    box-shadow: 0 4px 16px rgba(242, 143, 59, 0.2);
-    transform: translateY(-2px);
+    box-shadow: 0 10px 22px rgba(242, 143, 59, 0.18);
+    transform: translateY(-3px) scale(1.01);
 }
 
 .product-card-container {
@@ -227,10 +322,14 @@ table h3 {
 
 .product-card-image {
     width: 100%;
+    max-width: 140px;
     height: 100px;
-    object-fit: cover;
+    object-fit: contain;
+    object-position: center;
     border-radius: 8px;
     background: #f5f5f5;
+    display: block;
+    margin: 0 auto;
 }
 
 .product-card-info {
@@ -282,6 +381,25 @@ table h3 {
     height: auto;
 }
 
+.add-item-btn {
+    width: 100%;
+    padding: 10px 14px;
+    border-radius: 10px;
+    border: none;
+    background: linear-gradient(135deg, #f28f3b 0%, #e67e2a 100%);
+    color: white;
+    font-weight: 700;
+    font-size: 0.9rem;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    margin-top: 10px;
+}
+
+.add-item-btn:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 6px 12px rgba(242, 143, 59, 0.2);
+}
+
 .no-results {
     color: #999;
     padding: 12px;
@@ -291,7 +409,7 @@ table h3 {
 
 @media (max-width: 600px) {
     .results-panel {
-        max-height: 300px;
+        max-height: min(36vh, 260px);
     }
 
     .sub-list {
@@ -310,7 +428,7 @@ table h3 {
 
 .btn {
     padding: 12px 24px;
-    border-radius: 10px;
+    border-radius: 12px;
     border: none;
     cursor: pointer;
     font-weight: 600;
@@ -323,7 +441,7 @@ table h3 {
 .btn-primary {
     background: linear-gradient(135deg, #f28f3b 0%, #e67e2a 100%);
     color: white;
-    box-shadow: 0 4px 12px rgba(242, 143, 59, 0.2);
+    box-shadow: 0 8px 16px rgba(242, 143, 59, 0.2);
 }
 
 .btn-primary:hover {
@@ -336,9 +454,9 @@ table h3 {
 }
 
 .btn-logout {
-    background: #e8e8e8;
+    background: #f4f4f4;
     color: #2c3e50;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+    box-shadow: 0 4px 10px rgba(44, 62, 80, 0.06);
 }
 
 .btn-logout:hover {

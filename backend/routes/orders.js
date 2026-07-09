@@ -1,6 +1,6 @@
 import express from 'express';
 import jwt from 'jsonwebtoken';
-import dbPromise from '../bd.js';
+import pool from '../bd.js';
 
 const router = express.Router();
 const jwtSecret = process.env.JWT_SECRET || 'dev_secret';
@@ -24,137 +24,158 @@ function authenticateToken(req, res, next) {
 
 router.use(authenticateToken);
 
-// GET /api/orders - Fetch orders for authenticated user
+// GET /api/orders
 router.get('/', async (req, res) => {
     try {
-        const db = await dbPromise;
-        const orders = await db.all('SELECT * FROM ordenes WHERE usuario_id = ? ORDER BY id ASC', [req.user.id]);
+        const ordersResult = await pool.query(
+            'SELECT * FROM ordenes WHERE usuario_id = $1 ORDER BY id ASC',
+            [req.user.id]
+        );
 
-        // Fetch items for each order
+        const orders = ordersResult.rows;
+
         for (const order of orders) {
-            const items = await db.all('SELECT * FROM orden_items WHERE orden_id = ?', [order.id]);
-            order.items = items;
+            const itemsResult = await pool.query(
+                'SELECT * FROM orden_items WHERE orden_id = $1',
+                [order.id]
+            );
+            order.items = itemsResult.rows;
         }
 
-        res.json(orders);
+        return res.json(orders);
     } catch (err) {
         console.error('Error fetching orders:', err);
-        res.status(500).json({ error: 'Internal server error' });
+        return res.status(500).json({ error: 'Internal server error' });
     }
 });
 
-// GET /api/orders/:id - Fetch a single order by ID for the authenticated user
+// GET /api/orders/:id
 router.get('/:id', async (req, res) => {
     try {
-        const db = await dbPromise;
         const { id } = req.params;
-        const order = await db.get('SELECT * FROM ordenes WHERE id = ?', [id]);
+
+        const orderResult = await pool.query(
+            'SELECT * FROM ordenes WHERE id = $1',
+            [id]
+        );
+
+        const order = orderResult.rows[0];
 
         if (!order || order.usuario_id !== req.user.id) {
             return res.status(404).json({ error: 'Order not found' });
         }
 
-        // Fetch items
-        const items = await db.all('SELECT * FROM orden_items WHERE orden_id = ?', [id]);
-        order.items = items;
+        const itemsResult = await pool.query(
+            'SELECT * FROM orden_items WHERE orden_id = $1',
+            [id]
+        );
 
-        res.json(order);
+        order.items = itemsResult.rows;
+
+        return res.json(order);
     } catch (err) {
         console.error('Error fetching order:', err);
-        res.status(500).json({ error: 'Internal server error' });
+        return res.status(500).json({ error: 'Internal server error' });
     }
 });
 
-// POST /api/orders - Create a new order for the authenticated user
+// POST /api/orders
 router.post('/', async (req, res) => {
     try {
-        const db = await dbPromise;
         const { items, estado } = req.body;
 
         if (!items || !Array.isArray(items) || items.length === 0) {
             return res.status(400).json({ error: 'Items are required' });
         }
 
-        // Calculate total from items
-        const total = items.reduce((sum, item) => sum + (item.cantidad * item.precio), 0);
+        const total = items.reduce((sum, item) => sum + item.cantidad * item.precio, 0);
 
-        // Insert order
-        const result = await db.run(
-            'INSERT INTO ordenes (usuario_id, total, estado) VALUES (?, ?, ?)',
+        const orderInsert = await pool.query(
+            'INSERT INTO ordenes (usuario_id, total, estado) VALUES ($1, $2, $3) RETURNING *',
             [req.user.id, total, estado || 'pendiente']
         );
-        const orderId = result.lastID;
 
-        // Insert order items
+        const newOrder = orderInsert.rows[0];
+
         for (const item of items) {
-            await db.run(
-                'INSERT INTO orden_items (orden_id, producto_id, cantidad, precio) VALUES (?, ?, ?, ?)',
-                [orderId, item.producto_id, item.cantidad, item.precio]
+            await pool.query(
+                'INSERT INTO orden_items (orden_id, producto_id, cantidad, precio) VALUES ($1, $2, $3, $4)',
+                [newOrder.id, item.producto_id, item.cantidad, item.precio]
             );
         }
 
-        // Fetch the new order with items
-        const newOrder = await db.get('SELECT * FROM ordenes WHERE id = ?', [orderId]);
-        const orderItems = await db.all('SELECT * FROM orden_items WHERE orden_id = ?', [orderId]);
-        newOrder.items = orderItems;
+        const orderItems = await pool.query(
+            'SELECT * FROM orden_items WHERE orden_id = $1',
+            [newOrder.id]
+        );
 
-        res.status(201).json(newOrder);
+        newOrder.items = orderItems.rows;
+
+        return res.status(201).json(newOrder);
     } catch (err) {
         console.error('Error creating order:', err);
-        res.status(500).json({ error: 'Internal server error' });
+        return res.status(500).json({ error: 'Internal server error' });
     }
 });
 
-// PUT /api/orders/:id - Update an order if it belongs to the authenticated user
+// PUT /api/orders/:id
 router.put('/:id', async (req, res) => {
     try {
-        const db = await dbPromise;
         const { id } = req.params;
         const { total, estado } = req.body;
 
-        const order = await db.get('SELECT * FROM ordenes WHERE id = ?', [id]);
+        const orderResult = await pool.query(
+            'SELECT * FROM ordenes WHERE id = $1',
+            [id]
+        );
+
+        const order = orderResult.rows[0];
+
         if (!order || order.usuario_id !== req.user.id) {
             return res.status(404).json({ error: 'Order not found' });
         }
 
-        const result = await db.run(
-            'UPDATE ordenes SET total = ?, estado = ? WHERE id = ?',
+        const updatedResult = await pool.query(
+            'UPDATE ordenes SET total = $1, estado = $2 WHERE id = $3 RETURNING *',
             [total, estado, id]
         );
 
-        if (result.changes === 0) {
-            return res.status(404).json({ error: 'Order not found' });
-        }
-
-        const updatedOrder = await db.get('SELECT * FROM ordenes WHERE id = ?', [id]);
-        res.json(updatedOrder);
+        return res.json(updatedResult.rows[0]);
     } catch (err) {
         console.error('Error updating order:', err);
-        res.status(500).json({ error: 'Internal server error' });
+        return res.status(500).json({ error: 'Internal server error' });
     }
 });
 
-// DELETE /api/orders/:id - Delete an order if it belongs to the authenticated user
+// DELETE /api/orders/:id
 router.delete('/:id', async (req, res) => {
     try {
-        const db = await dbPromise;
         const { id } = req.params;
 
-        const order = await db.get('SELECT * FROM ordenes WHERE id = ?', [id]);
+        const orderResult = await pool.query(
+            'SELECT * FROM ordenes WHERE id = $1',
+            [id]
+        );
+
+        const order = orderResult.rows[0];
+
         if (!order || order.usuario_id !== req.user.id) {
             return res.status(404).json({ error: 'Order not found' });
         }
 
-        const result = await db.run('DELETE FROM ordenes WHERE id = ?', [id]);
-        if (result.changes === 0) {
+        await pool.query('DELETE FROM orden_items WHERE orden_id = $1', [id]);
+        const result = await pool.query('DELETE FROM ordenes WHERE id = $1', [id]);
+
+        if (result.rowCount === 0) {
             return res.status(404).json({ error: 'Order not found' });
         }
 
-        res.json({ message: 'Order deleted successfully' });
+        return res.json({ message: 'Order deleted successfully' });
     } catch (err) {
         console.error('Error deleting order:', err);
-        res.status(500).json({ error: 'Internal server error' });
+        return res.status(500).json({ error: 'Internal server error' });
     }
 });
 
 export default router;
+

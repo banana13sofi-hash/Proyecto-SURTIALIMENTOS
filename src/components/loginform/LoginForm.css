@@ -67,6 +67,23 @@
     transform: translateY(0);
 }
 
+.forgot-button {
+    margin-top: 12px;
+    padding: 0;
+    background: transparent;
+    color: #f28f3b;
+    box-shadow: none;
+    font-size: 0.95rem;
+    font-weight: 500;
+    text-decoration: underline;
+}
+
+.forgot-button:hover {
+    transform: none;
+    box-shadow: none;
+    color: #e67e2a;
+}
+
 .login-form p {
     text-align: center;
     margin-top: 16px;

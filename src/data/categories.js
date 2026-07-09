@@ -1,12 +1,12 @@
 const categories = {
   Frutas: [
-    { nombre: "Manzana", precio: 3.50, cantidad: 250, barcode: "7501234567001", imagen: "https://images.unsplash.com/photo-1560806887-1295db8spb3e?w=300" },
-    { nombre: "Banana", precio: 2.20, cantidad: 180, barcode: "7501234567018", imagen: "https://images.unsplash.com/photo-1571019614242-c5c5dee9f50b?w=300" },
-    { nombre: "Naranja", precio: 4.00, cantidad: 200, barcode: "7501234567025", imagen: "https://images.unsplash.com/photo-1553688905-5b5d0ce1fb4e?w=300" },
-    { nombre: "Uva", precio: 5.99, cantidad: 120, barcode: "7501234567032", imagen: "https://images.unsplash.com/photo-1585518419759-79e3c9b8b6fd?w=300" },
-    { nombre: "Mango", precio: 4.50, cantidad: 90, barcode: "7501234567049", imagen: "https://images.unsplash.com/photo-1585864299869-592a1efc4d1a?w=300" },
-    { nombre: "Pera", precio: 3.99, cantidad: 150, barcode: "7501234567056", imagen: "https://images.unsplash.com/photo-1585939584676-e96e7c8e4fb4?w=300" },
-    { nombre: "Fresa", precio: 6.50, cantidad: 100, barcode: "7501234567063", imagen: "https://images.unsplash.com/photo-1587393855258-915a805dicf8?w=300" },
+    { nombre: "Manzana", precio: 3.50, cantidad: 250, barcode: "7501234567001", imagen: "https://images.unsplash.com/photo-1567306226416-28f0efdc88ce?auto=format&fit=crop&w=300&q=80" },
+    { nombre: "Banana", precio: 2.20, cantidad: 180, barcode: "7501234567018", imagen: "https://images.unsplash.com/photo-1574226516831-e1dff420e43e?auto=format&fit=crop&w=300&q=80" },
+    { nombre: "Naranja", precio: 4.00, cantidad: 200, barcode: "7501234567025", imagen: "https://images.unsplash.com/photo-1575908524634-0d8e60b5e938?auto=format&fit=crop&w=300&q=80" },
+    { nombre: "Uva", precio: 5.99, cantidad: 120, barcode: "7501234567032", imagen: "https://images.unsplash.com/photo-1501004318641-b39e6451bec6?auto=format&fit=crop&w=300&q=80" },
+    { nombre: "Mango", precio: 4.50, cantidad: 90, barcode: "7501234567049", imagen: "https://images.unsplash.com/photo-1617196037275-975bffb6ed9e?auto=format&fit=crop&w=300&q=80" },
+    { nombre: "Pera", precio: 3.99, cantidad: 150, barcode: "7501234567056", imagen: "https://images.unsplash.com/photo-1491421801882-7ed173d7aae0?auto=format&fit=crop&w=300&q=80" },
+    { nombre: "Fresa", precio: 6.50, cantidad: 100, barcode: "7501234567063", imagen: "https://images.unsplash.com/photo-1535914254981-b5012eebbd15?auto=format&fit=crop&w=300&q=80" },
   ],
   Verduras: [
     { nombre: "Lechuga", precio: 2.50, cantidad: 200, barcode: "7501234567070", imagen: "https://images.unsplash.com/photo-1512621776951-a57141f2eefd?w=300" },

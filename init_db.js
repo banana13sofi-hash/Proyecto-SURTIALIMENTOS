@@ -1,74 +1,81 @@
-import pool from './backend/bd.js';
+import sqlite3 from "sqlite3";
+import { open } from "sqlite";
+import bcrypt from "bcryptjs";
 
-const createTables = async () => {
+const dbPromise = open({
+    filename: "./database.db",
+    driver: sqlite3.Database,
+});
+
+async function createTables() {
+    const db = await dbPromise;
+
     try {
-        // Create productos table
-        await pool.query(`
+        // PRODUCTOS
+        await db.exec(`
             CREATE TABLE IF NOT EXISTS productos (
-                id SERIAL PRIMARY KEY,
-                nombre VARCHAR(255) NOT NULL,
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                nombre TEXT NOT NULL,
                 descripcion TEXT,
-                precio DECIMAL(10, 2) NOT NULL,
+                precio REAL NOT NULL,
                 stock INTEGER DEFAULT 0,
-                categoria VARCHAR(100),
-                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                categoria TEXT,
+                created_at DATETIME DEFAULT CURRENT_TIMESTAMP
             );
         `);
 
-        // Create ordenes table
-        await pool.query(`
+        // ORDENES
+        await db.exec(`
             CREATE TABLE IF NOT EXISTS ordenes (
-                id SERIAL PRIMARY KEY,
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
                 usuario_id INTEGER,
-                total DECIMAL(10, 2) NOT NULL,
-                estado VARCHAR(50) DEFAULT 'pendiente',
-                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                total REAL NOT NULL,
+                estado TEXT DEFAULT 'pendiente',
+                created_at DATETIME DEFAULT CURRENT_TIMESTAMP
             );
         `);
 
-        // Create usuarios table for authentication
-        await pool.query(`
+        // USUARIOS
+        await db.exec(`
             CREATE TABLE IF NOT EXISTS usuarios (
-                id SERIAL PRIMARY KEY,
-                usuario VARCHAR(255) UNIQUE NOT NULL,
-                password VARCHAR(255) NOT NULL,
-                email VARCHAR(255),
-                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                usuario TEXT UNIQUE NOT NULL,
+                password TEXT NOT NULL,
+                email TEXT,
+                created_at DATETIME DEFAULT CURRENT_TIMESTAMP
             );
         `);
 
-        // Insert sample data into productos
-        await pool.query(`
-            INSERT INTO productos (nombre, descripcion, precio, stock, categoria) VALUES
-            ('Producto 1', 'Descripción del producto 1', 10.99, 100, 'Categoría A'),
-            ('Producto 2', 'Descripción del producto 2', 15.50, 50, 'Categoría B'),
-            ('Producto 3', 'Descripción del producto 3', 20.00, 75, 'Categoría A')
-            ON CONFLICT DO NOTHING;
+        console.log("✔ Tablas creadas correctamente");
+
+        // DATOS DE PRUEBA
+        await db.run(`
+            INSERT OR IGNORE INTO productos (nombre, descripcion, precio, stock, categoria)
+            VALUES
+            ('Producto 1', 'Descripción 1', 10.99, 100, 'A'),
+            ('Producto 2', 'Descripción 2', 15.50, 50, 'B');
         `);
 
-        // Insert sample data into ordenes
-        await pool.query(`
-            INSERT INTO ordenes (usuario_id, total, estado) VALUES
-            (1, 21.98, 'completado'),
-            (2, 15.50, 'pendiente')
-            ON CONFLICT DO NOTHING;
-        `);
+        const users = [
+            { usuario: "admin", password: "admin123", email: "admin@test.com" },
+            { usuario: "juan", password: "123456", email: "juan@test.com" }
+        ];
 
-        // Insert sample users for login
-        // ADVERTENCIA: Las contraseñas DEBEN ser hasheadas en producción.
-        // Para desarrollo, usa el script backend/bd.js que hashea contraseñas con bcrypt.
-        // NUNCA insertes contraseñas en texto claro en una base de datos real.
-        console.log('⚠️  NOTA DE SEGURIDAD:')
-        console.log('    - Las contraseñas NO deben almacenarse en texto claro');
-        console.log('    - El backend (backend/bd.js) usa bcrypt para hashear contraseñas');
-        console.log('    - Este script es solo para desarrollo/testing');
+        for (const u of users) {
+            const hash = await bcrypt.hash(u.password, 10);
 
-        console.log('Tables created and sample data inserted successfully');
+            await db.run(
+                `INSERT OR IGNORE INTO usuarios (usuario, password, email)
+                 VALUES (?, ?, ?)`,
+                [u.usuario, hash, u.email]
+            );
+        }
+
+        console.log("✔ Datos insertados correctamente");
+
     } catch (err) {
-        console.error('Error creating tables:', err);
-    } finally {
-        pool.end();
+        console.error("❌ Error:", err);
     }
-};
+}
 
 createTables();

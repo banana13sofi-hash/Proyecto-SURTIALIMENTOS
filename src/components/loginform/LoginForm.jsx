@@ -21,6 +21,10 @@ function LoginForm() {
     }
   };
 
+  const handleForgot = () => {
+    setError("Por favor contacte al administrador para recuperar su usuario o contraseña.");
+  };
+
   return (
     <div className="login-form">
       <h1>Iniciar sesión</h1>
@@ -39,6 +43,9 @@ function LoginForm() {
         />
         <button type="submit">Entrar</button>
       </form>
+      <button type="button" className="forgot-button" onClick={handleForgot}>
+        ¿Olvidé usuario o contraseña?
+      </button>
       {error && <p style={{ color: "red" }}>{error}</p>}
     </div>
   );

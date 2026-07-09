@@ -11,6 +11,10 @@ function LoginPage() {
   const [error, setError] = useState("");
   const navigate = useNavigate();
 
+  const handleForgot = () => {
+    setError("Por favor contacte al administrador para recuperar su usuario o contraseña.");
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError("");
@@ -38,10 +42,9 @@ function LoginPage() {
       }
     } catch (err) {
       console.error("Error al conectar con el servidor:", err);
-      setError("No se pudo conectar con el servidor");
+      setError("No se pudo conectar con el servidor. Verifique que el backend esté corriendo en http://localhost:3001");
     }
   };
-
   return (
     <div className="login-container">
       <div className="login-card">
@@ -85,6 +88,9 @@ function LoginPage() {
           {error && <p className="error-message">{error}</p>}
 
           <button type="submit">Ingresar</button>
+          <button type="button" className="forgot-button" onClick={handleForgot}>
+            ¿Olvidé usuario o contraseña?
+          </button>
         </form>
       </div>
     </div>

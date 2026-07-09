@@ -8,7 +8,8 @@ import authRoutes from "./routes/auth.js";
 import productRoutes from "./routes/products.js";
 import orderRoutes from "./routes/orders.js";
 
-dotenv.config();
+dotenv.config({ path: new URL('./.env', import.meta.url).pathname });
+
 
 const app = express();
 app.use(helmet({
@@ -28,13 +29,32 @@ app.use(helmet({
 }));
 app.use(
     cors({
-        origin: process.env.FRONTEND_URL || "http://localhost:3000",
+        origin: (origin, callback) => {
+            const allowedOrigins = [
+                process.env.FRONTEND_URL,
+                "http://localhost:3000",
+                "http://localhost:3002",
+                "http://127.0.0.1:3000",
+                "http://127.0.0.1:3002",
+            ].filter(Boolean);
+
+            if (!origin || allowedOrigins.includes(origin)) {
+                callback(null, true);
+            } else {
+                callback(new Error(`Origin not allowed by CORS: ${origin}`));
+            }
+        },
         methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
         credentials: true,
+        allowedHeaders: ["Content-Type", "Authorization"],
     })
 );
 app.use(express.json({ limit: "10kb" }));
 
+// Serve the Public-new static site at /public-new and at root '/'
+const publicNewPath = process.cwd() + '/backend/Public-new';
+app.use('/public-new', express.static(publicNewPath));
+app.use('/', express.static(publicNewPath));
 // ✅ rutas
 app.use("/api", authRoutes);
 app.use("/api/products", productRoutes);
@@ -45,8 +65,7 @@ app.get("/api/health", (req, res) => {
     res.json({ status: "OK", message: "Server is running" });
 });
 
-// Probar conexión
-app.get("/", (req, res) => res.send("Servidor funcionando"));
+// Probar conexión (health endpoint remains at /api/health)
 
 const PORT = process.env.PORT || 3001;
 const sslKeyPath = process.env.SSL_KEY_PATH;

@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useEffect } from "react";
+import React, { useState, useMemo, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import "./estilos.css";
 import categoriesData from "../../data/categories";
@@ -7,11 +7,12 @@ function HomePage() {
   const navigate = useNavigate();
 
   const [term, setTerm] = useState("");
-  const [expanded, setExpanded] = useState(null);
   const [visible, setVisible] = useState(false);
   const [products, setProducts] = useState([]);
   const [categories, setCategories] = useState({});
   const [loading, setLoading] = useState(true);
+  const [openGroup, setOpenGroup] = useState(null);
+  const searchBoxRef = useRef(null);
 
   useEffect(() => {
     const fetchProducts = async () => {
@@ -40,62 +41,177 @@ function HomePage() {
     fetchProducts();
   }, []);
 
-  const filtered = useMemo(() => {
-    const t = term.trim().toLowerCase();
-    const res = {};
-
-    // Filtrar productos de la base de datos
-    Object.keys(categories).forEach((cat) => {
-      if (!t) {
-        res[cat] = categories[cat];
-      } else {
-        res[cat] = categories[cat].filter((product) =>
-          product.nombre.toLowerCase().includes(t) ||
-          (product.descripcion || "").toLowerCase().includes(t)
-        );
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (searchBoxRef.current && !searchBoxRef.current.contains(event.target)) {
+        setVisible(false);
       }
-    });
+    };
 
-    // Agregar categorías y subcategorías del archivo de datos
-    Object.keys(categoriesData).forEach((catName) => {
-      const subcategories = categoriesData[catName];
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
 
-      // Filtrar subcategorías que coincidan con la búsqueda
-      const filteredSubcats = subcategories.filter((subcat) =>
-        subcat.nombre.toLowerCase().includes(t) ||
-        catName.toLowerCase().includes(t)
-      );
+  const findStaticImage = (name) => {
+    const match = Object.values(categoriesData)
+      .flat()
+      .find((item) => item.nombre.toLowerCase() === name.toLowerCase());
+    return match?.imagen;
+  };
 
-      if (filteredSubcats.length > 0 || !t) {
-        if (!res[catName]) {
-          res[catName] = [];
-        }
+  const getProductImage = (product) => {
+    const productName = String(product?.nombre || "").trim().toLowerCase();
+    const categoryName = String(product?.categoria || product?.category || "").trim().toLowerCase();
 
-        const subCatsToAdd = !t ? subcategories : filteredSubcats;
+    const keywordImageMap = {
+      banana: "https://images.unsplash.com/photo-1574226516831-e1dff420e43e?auto=format&fit=crop&w=300&q=80",
+      platano: "https://images.unsplash.com/photo-1574226516831-e1dff420e43e?auto=format&fit=crop&w=300&q=80",
+      naranja: "https://images.unsplash.com/photo-1575908524634-0d8e60b5e938?auto=format&fit=crop&w=300&q=80",
+      orange: "https://images.unsplash.com/photo-1575908524634-0d8e60b5e938?auto=format&fit=crop&w=300&q=80",
+      uva: "https://images.unsplash.com/photo-1501004318641-b39e6451bec6?auto=format&fit=crop&w=300&q=80",
+      grape: "https://images.unsplash.com/photo-1501004318641-b39e6451bec6?auto=format&fit=crop&w=300&q=80",
+      manzana: "https://images.unsplash.com/photo-1567306226416-28f0efdc88ce?auto=format&fit=crop&w=300&q=80",
+      apple: "https://images.unsplash.com/photo-1567306226416-28f0efdc88ce?auto=format&fit=crop&w=300&q=80",
+      pera: "https://images.unsplash.com/photo-1491421801882-7ed173d7aae0?auto=format&fit=crop&w=300&q=80",
+      fresa: "https://images.unsplash.com/photo-1535914254981-b5012eebbd15?auto=format&fit=crop&w=300&q=80",
+      mango: "https://images.unsplash.com/photo-1617196037275-975bffb6ed9e?auto=format&fit=crop&w=300&q=80",
+      tomate: "https://images.unsplash.com/photo-1592841494218-832cb10d5111?w=300",
+      lechuga: "https://images.unsplash.com/photo-1512621776951-a57141f2eefd?w=300",
+      pollo: "https://images.unsplash.com/photo-1598103442097-8b74394b95c6?w=300",
+      carne: "https://images.unsplash.com/photo-1555939594-58d7cb561404?w=300",
+      detergente: "https://images.unsplash.com/photo-1599599810974-69f0e2d9b74d?w=300",
+    };
 
-        subCatsToAdd.forEach((subcat) => {
-          if (!res[catName].find((item) =>
-            item.nombre === subcat.nombre
-          )) {
-            res[catName].push({
-              ...subcat,
-              id: `subcat-${catName}-${subcat.nombre}`,
-              isSubcategory: true,
-            });
-          }
+    for (const [keyword, image] of Object.entries(keywordImageMap)) {
+      if (productName.includes(keyword) || categoryName.includes(keyword)) {
+        return image;
+      }
+    }
+
+    if (product.imagen) return product.imagen;
+    if (findStaticImage(product.nombre)) return findStaticImage(product.nombre);
+
+    if (categoryName.includes("fruta") || categoryName.includes("a")) {
+      return "https://images.unsplash.com/photo-1574226516831-e1dff420e43e?auto=format&fit=crop&w=300&q=80";
+    }
+    if (categoryName.includes("verdura") || categoryName.includes("b")) {
+      return "https://images.unsplash.com/photo-1512621776951-a57141f2eefd?w=300";
+    }
+
+    return "https://via.placeholder.com/150?text=Producto";
+  };
+
+  const getCategoryLabel = (category) => {
+    if (!category) return "General";
+    const normalized = String(category).trim();
+    const lower = normalized.toLowerCase();
+
+    if (lower.includes("fruta") || lower.includes("banana") || lower.includes("manzana") || lower.includes("naranja") || lower.includes("uva") || lower.includes("pera") || lower.includes("fresa") || lower.includes("mango")) {
+      return "Frutas";
+    }
+    if (lower.includes("verdura") || lower.includes("lechuga") || lower.includes("tomate") || lower.includes("zanahoria") || lower.includes("cebolla") || lower.includes("ajo") || lower.includes("pimiento")) {
+      return "Verduras";
+    }
+    if (lower.includes("enlat") || lower.includes("atun") || lower.includes("maiz") || lower.includes("sopa") || lower.includes("frijol") || lower.includes("champin")) {
+      return "Enlatados";
+    }
+    if (lower.includes("limp") || lower.includes("deterg") || lower.includes("lavava") || lower.includes("cloro") || lower.includes("esponja")) {
+      return "Productos de limpieza";
+    }
+    return "General";
+  };
+
+  const addToOrder = (product, event) => {
+    if (event) event.stopPropagation();
+    try {
+      const raw = localStorage.getItem("cart") || "[]";
+      const cart = JSON.parse(raw);
+      const itemId = product.id || product.barcode || `${product.nombre}`;
+      const existing = cart.find((item) => item.id === itemId);
+      if (existing) {
+        existing.qty = (existing.qty || 0) + 1;
+      } else {
+        cart.push({
+          id: itemId,
+          name: product.nombre,
+          category: product.categoria || product.category || "Sin Categoría",
+          qty: 1,
+          precio: product.precio || 0,
+          addedAt: new Date().toISOString(),
         });
       }
+      localStorage.setItem("cart", JSON.stringify(cart));
+      setVisible(false);
+      alert(`${product.nombre} agregado a la orden`);
+    } catch (error) {
+      console.error("Error adding product to cart:", error);
+      alert("No se pudo agregar el producto a la orden");
+    }
+  };
+
+  const getCategoryFilterFromTerm = (searchText) => {
+    const normalized = searchText.trim().toLowerCase();
+    if (!normalized) return null;
+
+    if (normalized.includes("fruta") || normalized.includes("banana") || normalized.includes("manzana") || normalized.includes("naranja") || normalized.includes("uva") || normalized.includes("pera") || normalized.includes("fresa") || normalized.includes("mango")) {
+      return "Frutas";
+    }
+    if (normalized.includes("verdura") || normalized.includes("lechuga") || normalized.includes("tomate") || normalized.includes("zanahoria") || normalized.includes("cebolla") || normalized.includes("ajo") || normalized.includes("pimiento")) {
+      return "Verduras";
+    }
+    if (normalized.includes("enlat") || normalized.includes("atun") || normalized.includes("maiz") || normalized.includes("sopa") || normalized.includes("frijol") || normalized.includes("champin")) {
+      return "Enlatados";
+    }
+    if (normalized.includes("limp") || normalized.includes("deterg") || normalized.includes("lavava") || normalized.includes("cloro") || normalized.includes("esponja")) {
+      return "Productos de limpieza";
+    }
+    return null;
+  };
+
+  const filtered = useMemo(() => {
+    const t = term.trim().toLowerCase();
+    const categoryFilter = getCategoryFilterFromTerm(t);
+    const grouped = {
+      Frutas: categoriesData.Frutas || [],
+      Verduras: categoriesData.Verduras || [],
+      Enlatados: categoriesData.Enlatados || [],
+      "Productos de limpieza": categoriesData["Productos de Limpieza"] || [],
+    };
+
+    const filteredGroups = {};
+
+    Object.entries(grouped).forEach(([groupName, items]) => {
+      const normalizedGroupName = groupName.toLowerCase();
+      const groupMatches = !t || normalizedGroupName.includes(t);
+      const visibleItems = items.filter((item) => {
+        const itemName = String(item.nombre || "").toLowerCase();
+        const itemDescription = String(item.descripcion || "").toLowerCase();
+        return !t || itemName.includes(t) || itemDescription.includes(t);
+      });
+
+      if (groupMatches || visibleItems.length > 0) {
+        filteredGroups[groupName] = t ? visibleItems : items;
+      }
     });
 
-    return res;
-  }, [term, categories]);
+    if (categoryFilter) {
+      return { [categoryFilter]: grouped[categoryFilter] || [] };
+    }
+
+    if (!t) {
+      return filteredGroups;
+    }
+
+    return filteredGroups;
+  }, [term]);
 
   function onSelectItem(item) {
+    setVisible(false);
     navigate(`/results?term=${encodeURIComponent(item)}`);
   }
 
-  function toggleCategory(cat) {
-    setExpanded((prev) => (prev === cat ? null : cat));
+  function toggleGroup(groupName) {
+    setOpenGroup((prev) => (prev === groupName ? null : groupName));
   }
 
   if (loading) {
@@ -107,20 +223,16 @@ function HomePage() {
   }
 
   return (
-    <div style={{ backgroundColor: "white" }}>
-      <table width="100%">
-        <tbody>
-          <tr>
-            <td colSpan="1" style={{ backgroundColor: "#c8553d" }}>
-              <h3 style={{ textAlign: "center", margin: 0, color: "#000", textTransform: "none" }}>
-                Bienvenido señor usuario
-              </h3>
-            </td>
-          </tr>
-        </tbody>
-      </table>
+    <div className="home-page-shell">
+      <div className="home-hero">
+        <div className="home-hero-content">
+          <p className="home-hero-badge">Gestión de pedidos</p>
+          <h3>Bienvenido señor usuario</h3>
+          <p>Busca productos por nombre o categoría y organiza tus pedidos con una experiencia más limpia y ordenada.</p>
+        </div>
+      </div>
 
-      <div className="search-box">
+      <div className="search-box" ref={searchBoxRef}>
         <form
           method="get"
           id="search-form"
@@ -134,10 +246,11 @@ function HomePage() {
             <input
               type="text"
               id="search-input"
-              placeholder="Buscar productos"
+              placeholder="Buscar productos o categorías"
               value={term}
               onChange={(e) => {
-                setTerm(e.target.value);
+                const value = e.target.value;
+                setTerm(value);
                 setVisible(true);
               }}
               onFocus={() => setVisible(true)}
@@ -159,68 +272,32 @@ function HomePage() {
 
         {visible && (
           <div className="results-panel">
-            {Object.keys(filtered).map((cat) => {
-              const items = filtered[cat];
-              return (
-                <div className="category" key={cat}>
-                  <div
-                    className="category-header"
-                    onClick={() => toggleCategory(cat)}
-                    role="button"
-                    tabIndex={0}
-                    onKeyDown={() => toggleCategory(cat)}
-                  >
-                    <span className="cat-name">{cat}</span>
+            {Object.entries(filtered).filter(([, items]) => items.length > 0).length ? (
+              Object.entries(filtered).filter(([, items]) => items.length > 0).map(([groupName, items]) => (
+                <div className="category" key={groupName}>
+                  <div className="category-header" onClick={() => toggleGroup(groupName)}>
+                    <span className="cat-name">{groupName}</span>
                     <span className="cat-count">{items.length}</span>
                   </div>
-
-                  {(expanded === cat || term) && (
-                    <div className="sub-list">
-                      {items.length ? (
-                        items.map((product) => (
-                          <div
-                            key={product.id}
-                            className="sub-item-card"
-                            onClick={() => onSelectItem(product.nombre)}
-                          >
-                            <div className="product-card-container">
-                              {product.imagen && (
-                                <img
-                                  src={product.imagen}
-                                  alt={product.nombre}
-                                  className="product-card-image"
-                                  onError={(e) => {
-                                    e.target.src = "https://via.placeholder.com/80?text=Producto";
-                                  }}
-                                />
-                              )}
-                              <div className="product-card-info">
-                                <div className="product-card-name">{product.nombre}</div>
-                                <div className="product-card-meta">
-                                  <span className="product-card-price">${product.precio ? product.precio.toFixed(2) : '0.00'}</span>
-                                  <span className="product-card-qty">Stock: {product.cantidad}</span>
-                                </div>
-                                {product.barcode && (
-                                  <div className="product-card-barcode">
-                                    <img
-                                      src={`https://barcode.tec-it.com/barcode.ashx?data=${product.barcode}&code=Code128&dpi=96&height=30&showtext=0`}
-                                      alt="Barcode"
-                                      style={{ maxWidth: '100%', height: 'auto' }}
-                                    />
-                                  </div>
-                                )}
-                              </div>
-                            </div>
-                          </div>
-                        ))
-                      ) : (
-                        <div className="no-results">No hay coincidencias</div>
-                      )}
+                  {openGroup === groupName && (
+                    <div className="sub-list compact-list">
+                      {items.map((product) => (
+                        <button
+                          key={product.id || product.barcode || `${product.nombre}`}
+                          type="button"
+                          className="sub-item compact-item"
+                          onClick={() => onSelectItem(product.nombre)}
+                        >
+                          {product.nombre}
+                        </button>
+                      ))}
                     </div>
                   )}
                 </div>
-              );
-            })}
+              ))
+            ) : (
+              <div className="no-results">No hay coincidencias</div>
+            )}
           </div>
         )}
       </div>
